@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <EEPROM.h>
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -45,6 +46,9 @@ const int switch2Pin = 7;
 const int modeButtonPin = 10;
 const int selectButtonPin = 11;
 const int confirmButtonPin = 12;
+
+int muscle1ThresholdAddress = 0;
+int muscle2ThresholdAddress = sizeof(int);
 
 unsigned long time;
 int muscle1Value = 0;
@@ -223,6 +227,12 @@ void handleSwitches()
   }
 }
 
+void saveThresholds()
+{
+  EEPROM.put(muscle1ThresholdAddress, measureData.muscle1Threshold);
+  EEPROM.put(muscle2ThresholdAddress, measureData.muscle2Threshold);
+}
+
 void toggleMode () {
 
   if( appMode == playback) {
@@ -232,6 +242,7 @@ void toggleMode () {
     switch2Pressed = false;
     switch1Pressed = false;
     appMode = playback;
+    saveThresholds();
   }
 
   // TODO: If mode is now playback. Record thresholds in EEPROM
@@ -260,6 +271,15 @@ void setup() {
     Serial.println(F("SSD1306 allocation failed"));
     for(;;); // Don't proceed, loop forever
   }
+
+  int savedMuscle1Threshold; 
+  int savedMuscle2Threshold;
+
+  EEPROM.get(muscle1ThresholdAddress, savedMuscle1Threshold);
+  EEPROM.get(muscle2ThresholdAddress, savedMuscle2Threshold);
+
+  measureData.muscle1Threshold = savedMuscle1Threshold;
+  measureData.muscle2Threshold = savedMuscle2Threshold;
 
   // Show initial display buffer contents on the screen --
   // the library initializes this with an Adafruit splash screen.
